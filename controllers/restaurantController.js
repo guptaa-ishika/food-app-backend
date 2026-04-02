@@ -16,15 +16,32 @@ export const createRestaurant = asyncHandler(async (req, res) => {
 
   const owner = req.user.role === "admin" && req.body.owner ? req.body.owner : req.user._id;
 
+  const cuisine = Array.isArray(req.body.cuisine)
+    ? req.body.cuisine
+    : typeof req.body.cuisine === "string" && req.body.cuisine.trim()
+      ? [req.body.cuisine.trim()]
+      : [];
+
   const payload = {
     owner,
     name: req.body.name,
     description: req.body.description,
-    cuisine: req.body.cuisine,
+    cuisine,
     city: req.body.city,
     address: req.body.address,
-    deliveryFee: Number(req.body.deliveryFee) || 0,
-    deliveryTimeMinutes: Number(req.body.deliveryTimeMinutes) || 30,
+    // New names (frontend cards)
+    fee: Number(req.body.fee ?? req.body.deliveryFee) || 0,
+    deliveryMins: Number(req.body.deliveryMins ?? req.body.deliveryTimeMinutes) || 30,
+    image: req.body.image || req.body.coverImage?.url || "",
+    offer: req.body.offer ?? null,
+    tags: Array.isArray(req.body.tags) ? req.body.tags : [],
+    // rating/reviews are system-controlled (users/vendors can't set them)
+    rating: 0,
+    reviews: 0,
+
+    // Back-compat (existing services)
+    deliveryFee: Number(req.body.deliveryFee ?? req.body.fee) || 0,
+    deliveryTimeMinutes: Number(req.body.deliveryTimeMinutes ?? req.body.deliveryMins) || 30,
     isApproved: req.user.role === "admin" ? Boolean(req.body.isApproved) : false,
   };
 
@@ -33,6 +50,7 @@ export const createRestaurant = asyncHandler(async (req, res) => {
       url: req.body.coverImage.url,
       publicId: req.body.coverImage.publicId || null,
     };
+    payload.image = req.body.coverImage.url;
   }
 
   const restaurant = await Restaurant.create(payload);
@@ -98,21 +116,37 @@ export const updateRestaurant = asyncHandler(async (req, res) => {
     address,
     deliveryFee,
     deliveryTimeMinutes,
-    isActive,
+    fee,
+    deliveryMins,
+    image,
+    offer,
+    tags,
     coverImage,
     isApproved,
   } = req.body;
 
   if (name !== undefined) restaurant.name = name;
   if (description !== undefined) restaurant.description = description;
-  if (cuisine !== undefined) restaurant.cuisine = cuisine;
+  if (cuisine !== undefined) {
+    restaurant.cuisine = Array.isArray(cuisine)
+      ? cuisine
+      : typeof cuisine === "string" && cuisine.trim()
+        ? [cuisine.trim()]
+        : [];
+  }
   if (city !== undefined) restaurant.city = city;
   if (address !== undefined) restaurant.address = address;
+  if (fee !== undefined) restaurant.fee = Number(fee);
+  if (deliveryMins !== undefined) restaurant.deliveryMins = Number(deliveryMins);
+  if (image !== undefined) restaurant.image = image || "";
+  if (offer !== undefined) restaurant.offer = offer;
+  if (tags !== undefined) restaurant.tags = Array.isArray(tags) ? tags : [];
+  // rating/reviews are system-controlled; ignore any incoming values
+
+  // Back-compat updates
   if (deliveryFee !== undefined) restaurant.deliveryFee = Number(deliveryFee);
   if (deliveryTimeMinutes !== undefined) restaurant.deliveryTimeMinutes = Number(deliveryTimeMinutes);
-  if (isActive !== undefined && (isOwner || req.user.role === "admin")) {
-    restaurant.isActive = Boolean(isActive);
-  }
+
   if (req.user.role === "admin" && isApproved !== undefined) {
     restaurant.isApproved = Boolean(isApproved);
   }
@@ -125,6 +159,7 @@ export const updateRestaurant = asyncHandler(async (req, res) => {
       url: coverImage.url,
       publicId: coverImage.publicId || null,
     };
+    restaurant.image = coverImage.url;
   }
 
   await restaurant.save();

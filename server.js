@@ -14,6 +14,7 @@ import userRoutes from "./routes/userRoutes.js";
 import restaurantRoutes from "./routes/restaurantRoutes.js";
 import menuItemRoutes from "./routes/menuItemRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 
@@ -54,6 +55,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api", menuItemRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/cart", cartRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/payment", paymentRoutes);
 

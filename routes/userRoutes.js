@@ -27,6 +27,7 @@ router.patch(
   [
     body("name").optional().trim().notEmpty(),
     body("role").optional().isIn(["customer", "vendor", "admin"]),
+    body("isActive").optional().isBoolean(),
   ],
   updateUser,
 );

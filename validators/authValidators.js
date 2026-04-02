@@ -10,4 +10,5 @@ export const registerRules = [
 export const loginRules = [
   body("email").isEmail().normalizeEmail(),
   body("password").notEmpty(),
+  body("role").optional().isIn(["customer", "vendor", "admin"]).withMessage("role must be customer, vendor, or admin"),
 ];

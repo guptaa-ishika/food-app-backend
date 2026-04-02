@@ -19,7 +19,7 @@ export const optionalAuth = asyncHandler(async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, secret);
     const user = await User.findById(decoded.sub);
-    if (user) req.user = user;
+    if (user && user.isActive !== false) req.user = user;
   } catch {
     /* invalid token — treat as anonymous */
   }

@@ -14,6 +14,7 @@ export const register = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
 
   const exists = await User.findOne({ email });
+  console.log('exists', exists);
   if (exists) {
     throw new ApiError(409, "Email already registered");
   }
@@ -46,11 +47,24 @@ export const login = asyncHandler(async (req, res) => {
     throw new ApiError(422, "Validation failed", errors.array());
   }
 
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
 
   const user = await User.findOne({ email }).select("+password");
   if (!user || !(await user.comparePassword(password))) {
     throw new ApiError(401, "Invalid email or password");
+  }
+
+  if (user.isActive === false) {
+    throw new ApiError(403, "This account has been suspended");
+  }
+
+  /**
+   * Optional role enforcement:
+   * - Customer login page can omit role.
+   * - Vendor/Admin login pages send role, and we reject mismatches.
+   */
+  if (role && user.role !== role) {
+    throw new ApiError(403, "Invalid role for this account");
   }
 
   const token = generateToken(user._id);
